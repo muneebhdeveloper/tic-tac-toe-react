@@ -14,7 +14,9 @@ const combos = [
 ];
 
 export const Board = () => {
-  const [squares, setSquares] = useState(Array(9).fill(""));
+  const [squares, setSquares] = useState(
+    Array(9).fill({ value: "", set: null })
+  );
   const [turn, setTurn] = useState("X");
   const [winner, setWinner] = useState(null);
   const [tie, setTie] = useState(null);
@@ -22,11 +24,14 @@ export const Board = () => {
   const checkWinner = (sqauresArray, currentTurn) => {
     for (let combo of combos) {
       let [a, b, c] = combo;
-      const checkOne = sqauresArray[a] === currentTurn;
-      const checkTwo = sqauresArray[b] === currentTurn;
-      const checkThree = sqauresArray[c] === currentTurn;
+      const checkOne = sqauresArray[a].value === currentTurn;
+      const checkTwo = sqauresArray[b].value === currentTurn;
+      const checkThree = sqauresArray[c].value === currentTurn;
 
       if (checkOne && checkTwo && checkThree) {
+        sqauresArray[a].set = true;
+        sqauresArray[b].set = true;
+        sqauresArray[c].set = true;
         setWinner(currentTurn);
       }
     }
@@ -35,7 +40,7 @@ export const Board = () => {
   };
 
   const checkTie = () => {
-    const totalFilled = squares.filter((item) => item !== "").length;
+    const totalFilled = squares.filter((item) => item.value !== "").length;
 
     if (totalFilled === squares.length) {
       setTie(true);
@@ -43,18 +48,24 @@ export const Board = () => {
   };
 
   const onReset = () => {
-    setSquares(Array(9).fill(""));
+    setSquares(Array(9).fill({ value: "", set: null }));
     setTurn("X");
     setWinner(null);
     setTie(null);
   };
 
   const handleSquareClick = (i) => {
-    if (winner || squares[i]) return;
+    if (winner || squares[i].value) return;
 
-    const squaresCopy = [...squares];
-
-    squaresCopy[i] = turn;
+    const squaresCopy = squares.map((item, index) => {
+      if (index === i) {
+        return {
+          ...item,
+          value: turn,
+        };
+      }
+      return item;
+    });
 
     setSquares(squaresCopy);
 
@@ -65,6 +76,7 @@ export const Board = () => {
 
   useEffect(() => {
     checkTie();
+    console.log(squares);
   }, [squares]);
 
   return (
@@ -73,10 +85,11 @@ export const Board = () => {
         {squares.map((square, i) => {
           return (
             <Cell
-              className={square ? "animate" : null}
+              isSet={square.set}
+              className={square.value ? "animate" : null}
               onClick={() => handleSquareClick(i)}
               key={i}
-              value={square}
+              value={square.value}
             />
           );
         })}
